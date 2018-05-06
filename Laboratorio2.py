@@ -16,25 +16,91 @@ Laboratorio 2 de Redes de Computadores por Shalini Ramchandani & Javier Arredond
 ###################################################
 import numpy as np
 import matplotlib.pyplot as plt
-#from numpy import sin, linspace, pi
 from scipy.io.wavfile import read, write
-#from scipy import fft
+from scipy.fftpack import fft, ifft
 
-#import warnings
-#warnings.filterwarnings('ignore')
+import warnings
+warnings.filterwarnings('ignore')
 
 
 ###################################################
 ############# Definición de funciones #############
 ###################################################
+"""
+Función que se encarga de abrir archivos .wav y obtiene la frecuencia e información de la señal.
+Entrada:
+        name-> nombre del archivo con extensión .wav
+Salida:
+        rate  -> frecuencia de muestreo.
+        info  -> datos de la señal.
+        times -> tiempo para cada dato en info.
+"""
+def openWav(name):
+        rate, info = read(name)
+        dimension = info[0].size
+        if(dimension == 1):
+                data = info
+        else:
+                data = info[:,dimension-1]
+        n = len(data)
+        Ts = n / rate
+        times = np.linspace(0, Ts, n)
+        return (rate, data, times)
+"""
+Función que guarda en un archivo .wav datos de una señal
+Entrada:
+        title -> nombre de salida del archivo.
+        rate  -> frecuencia de muestreo de una señal.
+        data  -> señal en dominio del tiempo.
+"""
+def saveWav(title, rate, data):
+        write("audios/" + title + ".wav", rate, data.astype('int16'))
 
-def graphicSpectrogram(info,rate,title):
-	plt.specgram(info,Fs=rate)
+"""
+Función que realiza la transformada de fourier en base a los datos obtenidos del audio.
+Entrada:
+        data     -> señal en dominio del tiempo.
+        rate     -> frecuencia de muestreo de la señal.
+Salida:
+        fftData  -> transformada de fourier normalizada para los valores de la señal original.
+        fftFreqs -> frecuencias de muestreo que dependen del largo del arreglo data y de rate.
+"""
+def tFourier(data,  rate):
+        n = len(data)
+        Ts = n / rate
+        fftData = fft(data) / n
+        fftFreqs = np.fft.fftfreq(n, 1/rate)
+        return (fftData, fftFreqs)
+
+"""
+Función que se encarga de realizar la transformada inversa de fourier a valores que estén en dominio de su frecuencia.
+Entrada:
+        fftData -> transformada de fourier normalizada.
+Salida:
+        transformada de fourier inversa desnormalizada, se puede utilizar para escribir archivos .wav (audio)
+"""
+def tiFourier(fftData):
+        return ifft(fftData)*len(fftData)
+        
+
+
+
+"""
+Función que grafica el espectrograma, dado los valores de la señal y el muestreo de frecuencia.
+Entrada:
+        info -> datos de la señal a la cual se quiere graficar el espectrograma.
+        rate ->frecuencia de muestreo de la señal.
+        title-> titulo del gráfico.
+
+"""
+def graphicSpectrogram(info, rate, title):
+	plt.specgram(info,Fs=rate, cmap= 'nipy_spectral', noverlap= 250)
 	plt.title(title)
 	plt.xlabel('Time [sec]')
 	plt.ylabel('Frecuency')
-	plt.savefig(title+".png")
-	plt.show()
+	plt.savefig("graphics/" + title + ".png")
+	plt.close('all')
+
 
 
 ###################################################
@@ -42,11 +108,7 @@ def graphicSpectrogram(info,rate,title):
 ###################################################
 
 #Lectura del archivo .wav
-rate, info = read("beacon.wav")
-dimension = info[0].size
-if (dimension == 1):
-	data = info
-else:
-	data = info[:,dimension-1]
+rate, data, times = openWav("beacon.wav")
+graphicSpectrogram(data, rate, "Espectrograma")
 
-graphicSpectrogram(data,rate,"Espectrograma")
+print("Exito")
