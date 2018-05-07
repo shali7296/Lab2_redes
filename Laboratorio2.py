@@ -15,6 +15,7 @@ Laboratorio 2 de Redes de Computadores por Shalini Ramchandani & Javier Arredond
 ################## Importaciones ##################
 ###################################################
 import numpy as np
+from numpy import linspace
 import matplotlib.pyplot as plt
 from scipy.io.wavfile import read, write
 from scipy.fftpack import fft, ifft
@@ -102,12 +103,29 @@ def graphicSpectrogram(info, rate, title):
 	plt.savefig("graphics/" + title + ".png")
 	plt.close('all')
 
+def makeGraphic(title, xlabel, xdata, ylabel, ydata):
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.plot(xdata, ydata)
+    #plt.show()
+    plt.savefig("graphics/" + title + ".png")
+
 def lowFilter(data,rate):
 	nyq = rate / 2
 	cutoff = 1000
 	numtaps = cutoff + 1
-	coeff1 = firwin(numtaps,(cutoff/nyq))
-	filtered = lfilter(coeff1,1.0,data)
+	coeff = firwin(numtaps,(cutoff/nyq)) #,window= 'blackmanharris'
+	filtered = lfilter(coeff,1.0,data)
+	return filtered
+
+def highFilter(data,rate):
+	nyq = rate / 2
+	cutoff_high = 2000
+	cutoff_low = 1000
+	#numtaps = cutoff_high + 1
+	coeff = firwin(cutoff_high,(cutoff_low/nyq))
+	filtered = lfilter(coeff,1.0,data)
 	return filtered
 
 ###################################################
@@ -115,15 +133,27 @@ def lowFilter(data,rate):
 ###################################################
 
 #Lectura del archivo .wav
-rate, data, times = openWav("audios/beacon.wav") #rate = frecuencia
+rate, data, times = openWav("audios/beacon.wav") #rate = frecuencia, data = tiempo
+
 #Espectrograma del audio sin filtrado.
 graphicSpectrogram(data, rate, "Espectrograma")
+fftData, fftFreqs = tFourier(data,rate)
+y = linspace(0, rate, len(abs(fftData)))
+makeGraphic("Audio sin filtro", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData)) #Si comento esta linea, se ve bien el espectrograma :c
 
-filtered = lowFilter(data,rate)
+#Filtro Paso Bajo: Mantiene las frecuencias bajas, eliminando las frecuencias altas. 
+#Se grafica el espectrograma y se transforma en un archivo .wav.
+lowFiltered = lowFilter(data,rate)
+graphicSpectrogram(lowFiltered, rate, "Espectrograma Filtrado Paso Bajo")
+fftData1, fftFreqs = tFourier(lowFiltered,rate)
+y = linspace(0, rate, len(abs(fftData1)))
+makeGraphic("Audio con filtro de paso bajo", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData1))
+saveWav("AudioFiltrado_PasoBajo", rate, lowFiltered)
 
-graphicSpectrogram(filtered, rate, "Espectrograma Filtrado")
-
-saveWav("AudioFiltrado_PasoBajo", rate, filtered)
+#Filtro Paso Alto:
+#highFiltered = highFilter(data,rate)
+#graphicSpectrogram(highFiltered, rate, "Espectrograma Filtrado Paso Alto")
+#saveWav("AudioFiltrado_PasoAlto", rate, highFiltered)
 
 print("Exito")
 
@@ -134,3 +164,11 @@ Deben centrarse en el análisis de cada uno de los filtros y cuál consideran qu
 
 En los informes centrense bien en el desarrollo de la experiencia, cómo usan las funciones, por qué 
 eligieron los parámetros y de dónde vienen, y el procedimiento. Y analicen en profundidad."""
+
+
+"""
+- Arreglar lo del grafico y specgram
+- PasoBajo: 1000Hz
+- PasoAlto: 2500 o 3000
+- PasoBanda: 1300 - 3000 Hz
+"""
