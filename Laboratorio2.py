@@ -110,6 +110,7 @@ def makeGraphic(title, xlabel, xdata, ylabel, ydata):
     plt.plot(xdata, ydata)
     #plt.show()
     plt.savefig("graphics/" + title + ".png")
+    plt.close('all')
 
 def lowFilter(data,rate):
 	nyq = rate / 2
@@ -121,8 +122,8 @@ def lowFilter(data,rate):
 
 def highFilter(data,rate):
 	nyq = rate / 2
-	cutoff_high = 2000
-	cutoff_low = 1000
+	cutoff_high = 5000
+	cutoff_low = 3000
 	#numtaps = cutoff_high + 1
 	coeff = firwin(cutoff_high,(cutoff_low/nyq))
 	filtered = lfilter(coeff,1.0,data)
@@ -145,15 +146,18 @@ makeGraphic("Audio sin filtro", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftDa
 #Se grafica el espectrograma y se transforma en un archivo .wav.
 lowFiltered = lowFilter(data,rate)
 graphicSpectrogram(lowFiltered, rate, "Espectrograma Filtrado Paso Bajo")
-fftData1, fftFreqs = tFourier(lowFiltered,rate)
+fftData1, fftFreqs1 = tFourier(lowFiltered,rate)
 y = linspace(0, rate, len(abs(fftData1)))
 makeGraphic("Audio con filtro de paso bajo", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData1))
 saveWav("AudioFiltrado_PasoBajo", rate, lowFiltered)
 
 #Filtro Paso Alto:
-#highFiltered = highFilter(data,rate)
-#graphicSpectrogram(highFiltered, rate, "Espectrograma Filtrado Paso Alto")
-#saveWav("AudioFiltrado_PasoAlto", rate, highFiltered)
+highFiltered = highFilter(data,rate)
+graphicSpectrogram(highFiltered, rate, "Espectrograma Filtrado Paso Alto")
+fftData2, fftFreqs2 = tFourier(highFiltered,rate)
+y = linspace(0, rate, len(abs(fftData2)))
+makeGraphic("Audio con filtro de paso Alto", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData2))
+saveWav("AudioFiltrado_PasoAlto", rate, highFiltered)
 
 print("Exito")
 
