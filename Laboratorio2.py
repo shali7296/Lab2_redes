@@ -18,6 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io.wavfile import read, write
 from scipy.fftpack import fft, ifft
+from scipy.signal import firwin, lfilter
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -96,19 +97,40 @@ Entrada:
 def graphicSpectrogram(info, rate, title):
 	plt.specgram(info,Fs=rate, cmap= 'nipy_spectral', noverlap= 250)
 	plt.title(title)
-	plt.xlabel('Time [sec]')
-	plt.ylabel('Frecuency')
+	plt.xlabel('Tiempo [seg]')
+	plt.ylabel('Frecuencia [Hz]')
 	plt.savefig("graphics/" + title + ".png")
 	plt.close('all')
 
-
+def lowFilter(data,rate):
+	nyq = rate / 2
+	cutoff = 1000
+	numtaps = cutoff + 1
+	coeff1 = firwin(numtaps,(cutoff/nyq))
+	filtered = lfilter(coeff1,1.0,data)
+	return filtered
 
 ###################################################
 ################ Bloque Principal #################
 ###################################################
 
 #Lectura del archivo .wav
-rate, data, times = openWav("beacon.wav")
+rate, data, times = openWav("audios/beacon.wav") #rate = frecuencia
+#Espectrograma del audio sin filtrado.
 graphicSpectrogram(data, rate, "Espectrograma")
 
+filtered = lowFilter(data,rate)
+
+graphicSpectrogram(filtered, rate, "Espectrograma Filtrado")
+
+saveWav("AudioFiltrado_PasoBajo", rate, filtered)
+
 print("Exito")
+
+
+"""La idea es como dice el enunciado es probar distintos parámetros.
+Diseñen un filtro paso bajo, otro paso alto y un paso banda.
+Deben centrarse en el análisis de cada uno de los filtros y cuál consideran que es mejor y por qué.
+
+En los informes centrense bien en el desarrollo de la experiencia, cómo usan las funciones, por qué 
+eligieron los parámetros y de dónde vienen, y el procedimiento. Y analicen en profundidad."""
