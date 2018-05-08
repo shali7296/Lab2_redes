@@ -48,6 +48,7 @@ def openWav(name):
         Ts = n / rate
         times = np.linspace(0, Ts, n)
         return (rate, data, times)
+
 """
 Función que guarda en un archivo .wav datos de una señal
 Entrada:
@@ -55,6 +56,7 @@ Entrada:
         rate  -> frecuencia de muestreo de una señal.
         data  -> señal en dominio del tiempo.
 """
+
 def saveWav(title, rate, data):
         write("audios/" + title + ".wav", rate, data.astype('int16'))
 
@@ -84,9 +86,6 @@ Salida:
 def tiFourier(fftData):
         return ifft(fftData)*len(fftData)
         
-
-
-
 """
 Función que grafica el espectrograma, dado los valores de la señal y el muestreo de frecuencia.
 Entrada:
@@ -103,6 +102,15 @@ def graphicSpectrogram(info, rate, title):
 	plt.savefig("graphics/" + title + ".png")
 	plt.close('all')
 
+"""
+Función general utilizada para graficar.
+Entrada: 
+		title -> titulo del gráfico
+		xlabel -> nombre del eje x
+		xdata -> datos del eje x
+		ylabel -> nombre del eje y 
+		ydata -> datos del eje y
+"""
 def makeGraphic(title, xlabel, xdata, ylabel, ydata):
     plt.title(title)
     plt.xlabel(xlabel)
@@ -112,6 +120,14 @@ def makeGraphic(title, xlabel, xdata, ylabel, ydata):
     plt.savefig("graphics/" + title + ".png")
     plt.close('all')
 
+"""
+Función que realiza el filtro paso bajo sobre una señal dada, eliminando todas las frecuencias altas y manteniendo las bajas.
+Entrada: 
+		data -> señal en dominio del tiempo.
+        rate -> frecuencia de muestreo de la señal. 
+Salida:
+		Señal filtrada
+"""
 def lowFilter(data,rate):
 	nyq = rate / 2
 	cutoff = 1000
@@ -120,6 +136,14 @@ def lowFilter(data,rate):
 	filtered = lfilter(coeff,1.0,data)
 	return filtered
 
+"""
+Función que realiza el filtro paso alto sobre una señal dada, eliminando todas las frecuencias bajas y manteniendo las altas.
+Entrada: 
+		data -> señal en dominio del tiempo.
+        rate -> frecuencia de muestreo de la señal. 
+Salida:
+		Señal filtrada
+"""
 def highFilter(data,rate):
 	nyq = rate / 2
 	cutoff = 3000
@@ -128,6 +152,15 @@ def highFilter(data,rate):
 	filtered = lfilter(coeff,1.0,data)
 	return filtered
 
+"""
+Función que realiza el filtro paso banda sobre una señal dada, que consiste en mantener las frecuencias dentro de un rango definido,
+eliminando las frecuencias superiores e inferiores a ese rango.
+Entrada: 
+		data -> señal en dominio del tiempo.
+        rate -> frecuencia de muestreo de la señal. 
+Salida:
+		Señal filtrada
+"""
 def bandFilter(data,rate):
 	nyq = rate / 2
 	cutoff_low = 1300
@@ -136,29 +169,9 @@ def bandFilter(data,rate):
 	coeff_low = firwin(numtaps,(cutoff_low/nyq))
 	coeff_high = firwin(numtaps,(cutoff_high/nyq),pass_zero = False)
 	#coeff_high[numtaps/2] = coeff_high[numtaps/2] + 1
-
 	bandFilter =- (coeff_low+coeff_high)
-	#bandFilter =- coeff_high
-
 	bandFilter[numtaps/2] = bandFilter[numtaps/2] + 1
 	filtered = lfilter(bandFilter,1.0,data)
-
-	#n = 1201 					#Filter generate order
-	#fs = rate 				#Audio frecuency
-	#lowcut = 1300 				#Frecuency Low
-	#highcut = 2500 				#Frecuency Top
-	#nyq = rate/2
-	#low = lowcut/nyq
-	#high = highcut/nyq
-	##A step filter is obtained under
-	#lowChannel = firwin(n, cutoff = low, window = 'blackmanharris')
-	##It yields a high-pass filter
-	#highChannel = - firwin(n, cutoff = high, window = 'blackmanharris'); 
-	##a partir de los filtros paso bajo data_y paso alto se obtiene el filtro paso banda
-	#highChannel[n/2] = highChannel[n/2] + 1
-	#bandFilter =- lowChannel
-	#bandFilter[n/2] = bandFilter[n/2] + 1
-	#filtered = lfilter(bandFilter,1.0,data)
 	return filtered
 
 ###################################################
@@ -167,14 +180,14 @@ def bandFilter(data,rate):
 #Lectura del archivo .wav
 rate, data, times = openWav("audios/beacon.wav") #rate = frecuencia, data = tiempo
 
-#Espectrograma del audio sin filtrado.
+#A continuación, se grafica el espectrograma, la transformada de fourier y la antitransformada, para finalmente transformar en un archivo .wav.
+#Audio sin filtro:
 graphicSpectrogram(data, rate, "Espectrograma")
 fftData, fftFreqs = tFourier(data,rate)
 y = linspace(0, rate, len(abs(fftData)))
-makeGraphic("Grafico audio sin filtro", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData)) #Si comento esta linea, se ve bien el espectrograma :c
+makeGraphic("Grafico audio sin filtro", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData))
 
 #Filtro Paso Bajo: Mantiene las frecuencias bajas, eliminando las frecuencias altas. 
-#Se grafica el espectrograma y se transforma en un archivo .wav.
 lowFiltered = lowFilter(data,rate)
 graphicSpectrogram(lowFiltered, rate, "Espectrograma Filtrado Paso Bajo")
 fftData1, fftFreqs1 = tFourier(lowFiltered,rate)
@@ -182,7 +195,7 @@ y = linspace(0, rate, len(abs(fftData1)))
 makeGraphic("Grafico audio con filtro de paso bajo", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData1))
 saveWav("AudioFiltrado_PasoBajo", rate, lowFiltered)
 
-#Filtro Paso Alto:
+#Filtro Paso Alto: Mantiene las frecuencias altas, eliminando las frecuencias bajas.
 highFiltered = highFilter(data,rate)
 graphicSpectrogram(highFiltered, rate, "Espectrograma Filtrado Paso Alto")
 fftData2, fftFreqs2 = tFourier(highFiltered,rate)
@@ -190,7 +203,7 @@ y = linspace(0, rate, len(abs(fftData2)))
 makeGraphic("Grafico audio con filtro de paso Alto", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData2))
 saveWav("AudioFiltrado_PasoAlto", rate, highFiltered)
 
-#Filtro Paso Banda:
+#Filtro Paso Banda: Mantiene las frecuencias dentro de un rango definido, eliminando sus alrededores.
 bandFiltered = bandFilter(data,rate)
 graphicSpectrogram(bandFiltered, rate, "Espectrograma Filtrado Paso Banda")
 fftData3, fftFreqs3 = tFourier(bandFiltered,rate)
@@ -198,15 +211,8 @@ y = linspace(0, rate, len(abs(fftData3)))
 makeGraphic("Grafico audio con filtro de paso Banda", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData3))
 saveWav("AudioFiltrado_PasoBanda", rate, bandFiltered)
 
-print("Exito")
+print("Ejecucion Terminada.")
 
-
-"""La idea es como dice el enunciado es probar distintos parámetros.
-Diseñen un filtro paso bajo, otro paso alto y un paso banda.
-Deben centrarse en el análisis de cada uno de los filtros y cuál consideran que es mejor y por qué.
-
-En los informes centrense bien en el desarrollo de la experiencia, cómo usan las funciones, por qué 
-eligieron los parámetros y de dónde vienen, y el procedimiento. Y analicen en profundidad."""
 
 
 """
@@ -214,4 +220,6 @@ eligieron los parámetros y de dónde vienen, y el procedimiento. Y analicen en 
 - PasoAlto: 2500 o 3000
 - PasoBanda: 1300 - 3000 Hz
 - Aplicar el shift para rectificar
+- Aplicar anti-transformada
+- Se debe mostrar por pantalla, o guardarla como gráfico basta?
 """
