@@ -85,7 +85,19 @@ Salida:
 """
 def tiFourier(fftData):
         return ifft(fftData)*len(fftData)
-        
+    
+def ifftGraphic(data, rate, fftData,title): # Aquí me deje llevar, no se porqie no funciona :(
+	datas = len(data)
+	duration = datas/float(rate)
+	t = linspace(0, duration, datas)
+	ifftData = ifft(fftData, datas)
+	plt.plot(t,ifftData*len(fftData)) #Aquí teniamos t,t -> por eso graficaba una recta :o
+	plt.title(title)
+	plt.xlabel("Tiempo [s]")
+	plt.ylabel("Amplitud [dB]")
+	plt.savefig("graphics/" + title + ".png")
+	plt.close('all')
+	return
 """
 Función que grafica el espectrograma, dado los valores de la señal y el muestreo de frecuencia.
 Entrada:
@@ -168,11 +180,16 @@ def bandFilter(data,rate):
 	numtaps = 1201
 	coeff_low = firwin(numtaps,(cutoff_low/nyq))
 	coeff_high = firwin(numtaps,(cutoff_high/nyq),pass_zero = False)
-	#coeff_high[numtaps/2] = coeff_high[numtaps/2] + 1
 	bandFilter =- (coeff_low+coeff_high)
 	bandFilter[numtaps/2] = bandFilter[numtaps/2] + 1
 	filtered = lfilter(bandFilter,1.0,data)
 	return filtered
+
+def timeGraphic(data, rate,title):
+	duration = len(data)/rate # Tiempo que dura todo el audio
+	t = linspace(0, duration, len(data)) # Intervalos de tiempo de 0 a t, generando la misma cantidad de datos que hay en data o vector tiempo
+	makeGraphic(title, "Tiempo [s]", t, "Amplitud [dB]", data)
+	return 
 
 ###################################################
 ################ Bloque Principal #################
@@ -183,32 +200,49 @@ rate, data, times = openWav("audios/beacon.wav") #rate = frecuencia, data = tiem
 #A continuación, se grafica el espectrograma, la transformada de fourier y la antitransformada, para finalmente transformar en un archivo .wav.
 #Audio sin filtro:
 graphicSpectrogram(data, rate, "Espectrograma")
+timeGraphic(data,rate,"Grafico tiempo senal original")
 fftData, fftFreqs = tFourier(data,rate)
 y = linspace(0, rate, len(abs(fftData)))
-makeGraphic("Grafico audio sin filtro", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData))
+makeGraphic("Grafico frecuencia senal original", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData))
+ifftGraphic(data, rate, fftData,"Antitransformada de la senal original")
 
 #Filtro Paso Bajo: Mantiene las frecuencias bajas, eliminando las frecuencias altas. 
 lowFiltered = lowFilter(data,rate)
+timeGraphic(lowFiltered,rate,"Grafico tiempo con filtro paso bajo")
 graphicSpectrogram(lowFiltered, rate, "Espectrograma Filtrado Paso Bajo")
 fftData1, fftFreqs1 = tFourier(lowFiltered,rate)
 y = linspace(0, rate, len(abs(fftData1)))
-makeGraphic("Grafico audio con filtro de paso bajo", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData1))
+makeGraphic("Grafico frecuencia con filtro de paso bajo", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData1))
+ifftGraphic(data, rate, fftData1,"Anti transformada de la senal filtro paso bajo")
+
+#ifftData1 = tiFourier(fftData1)
+#makeGraphic("Anti transformada de la señal filtro paso bajo", "Tiempo [seg]",ifftData1,"Amplitud [dB]",rate)
 saveWav("AudioFiltrado_PasoBajo", rate, lowFiltered)
 
 #Filtro Paso Alto: Mantiene las frecuencias altas, eliminando las frecuencias bajas.
 highFiltered = highFilter(data,rate)
+timeGraphic(highFiltered,rate,"Grafico tiempo con filtro paso alto")
 graphicSpectrogram(highFiltered, rate, "Espectrograma Filtrado Paso Alto")
 fftData2, fftFreqs2 = tFourier(highFiltered,rate)
 y = linspace(0, rate, len(abs(fftData2)))
-makeGraphic("Grafico audio con filtro de paso Alto", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData2))
+makeGraphic("Grafico frecuencia con filtro de paso Alto", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData2))
+ifftGraphic(data, rate, fftData2,"Anti transformada de la senal filtro paso alto")
+
+#ifftData2 = tiFourier(fftData2)
+#makeGraphic("Anti transformada de la señal filtro paso alto", "Tiempo [seg]",ifftData2,"Amplitud [dB]",rate)
 saveWav("AudioFiltrado_PasoAlto", rate, highFiltered)
 
 #Filtro Paso Banda: Mantiene las frecuencias dentro de un rango definido, eliminando sus alrededores.
 bandFiltered = bandFilter(data,rate)
+timeGraphic(bandFiltered,rate,"Grafico tiempo con filtro paso banda")
 graphicSpectrogram(bandFiltered, rate, "Espectrograma Filtrado Paso Banda")
 fftData3, fftFreqs3 = tFourier(bandFiltered,rate)
 y = linspace(0, rate, len(abs(fftData3)))
-makeGraphic("Grafico audio con filtro de paso Banda", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData3))
+makeGraphic("Grafico frecuencia con filtro de paso Banda", "Frecuencia [Hz]", y, "Amplitud [dB]", abs(fftData3))
+ifftGraphic(data, rate, fftData3,"Anti transformada de la senal filtro paso banda")
+
+#ifftData3 = tiFourier(fftData3)
+#makeGraphic("Anti transformada de la señal filtro paso banda", "Tiempo [seg]",ifftData3,"Amplitud [dB]",rate)
 saveWav("AudioFiltrado_PasoBanda", rate, bandFiltered)
 
 print("Ejecucion Terminada.")
