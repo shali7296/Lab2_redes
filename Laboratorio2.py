@@ -173,10 +173,10 @@ Entrada:
 Salida:
 		Señal filtrada
 """
-def bandFilter(data,rate):
+def bandFilter(data,rate): 	
 	nyq = rate / 2
 	cutoff_low = 1300
-	cutoff_high = 2500
+	cutoff_high = 7500
 	numtaps = 1201
 	coeff_low = firwin(numtaps,(cutoff_low/nyq))
 	coeff_high = firwin(numtaps,(cutoff_high/nyq),pass_zero = False)
